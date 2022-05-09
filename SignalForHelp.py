@@ -1,25 +1,20 @@
-import numpy as np
-
 from HandDetector import HandDetector
 import cv2
-import pyautogui
 import time
 import smtplib
-
-
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 
 
-def send_test_mail(body):#sends the email
+def send_test_mail(body):  # sends the email
     sender_email = "signalforhelhack@email.com"
     receiver_email = "signalforhelhack@gmail.com"
     msg = MIMEMultipart()
     msg['Subject'] = 'DistressSignal_cam1'
     msg['From'] = sender_email
     msg['To'] = receiver_email
-    msgText = MIMEText('<b>%s</b>' % (body), 'html')
+    msgText = MIMEText('<b>%s</b>' % body, 'html')
     msg.attach(msgText)
     img = open('screenshot.png', 'rb').read()
     msgImg = MIMEImage(img, 'png')
@@ -40,20 +35,18 @@ def send_test_mail(body):#sends the email
 handDetector = HandDetector(min_detection_confidence=0.7)
 webcamFeed = cv2.VideoCapture(0)
 webcamFeed.set(cv2.CAP_PROP_FRAME_WIDTH, 1000)
-list = []
+track_list = []
 timeLast = time.time()
 previousCount = -1
-
 
 while True:
     status, image = webcamFeed.read()
     handLandmarks = handDetector.findHandLandMarks(image=image, draw=True)
     count = 0
 
-    if (len(handLandmarks) != 0):
+    if len(handLandmarks) != 0:
         # we will get y coordinate of finger-tip and check if it lies above middle landmark of that finger
         # details: https://google.github.io/mediapipe/solutions/hands
-
 
         if handLandmarks[4][3] == "Right" and handLandmarks[4][1] > handLandmarks[3][1]:  # Right Thumb
             count = count + 1
@@ -70,45 +63,45 @@ while True:
             count = count + 1
     timeNow = time.time()
 
-
-    if int(timeNow - timeLast) > 1 and count != previousCount :
+    if int(timeNow - timeLast) > 1 and count != previousCount:
 
         timeLast = timeNow
         previousCount = count
-        if list == [5, 4]:
+        if track_list == [5, 4]:
             if count == 0 or count == 4:
                 if count == 0:
-                    list.append(count)
+                    track_list.append(count)
 
             else:
-                list = []
-        if list == [5]:
+                track_list = []
+        if track_list == [5]:
             if count == 4 or count == 5:
                 if count == 4:
-                    list.append(count)
+                    track_list.append(count)
             else:
-                list = []
-        if count == 5 and list == []:
-            list.append(count)
-        if list == [1, 0]:
+                track_list = []
+        if count == 5 and track_list == []:
+            track_list.append(count)
+        if track_list == [1, 0]:
             if count == 5 or count == 1 or count == 4:
                 if count == 5 or count == 4:
-                    list.append(count)
+                    track_list.append(count)
 
             else:
-                list = []
-        if list == [1]:
+                track_list = []
+        if track_list == [1]:
             if count == 0 or count == 1:
                 if count == 0:
-                    list.append(count)
+                    track_list.append(count)
             else:
-                list = []
-        if count == 1 and list == []:
-            list.append(count)
-
+                track_list = []
+        if count == 1 and track_list == []:
+            track_list.append(count)
 
     # print(count)
-    if list == [1, 0, 5] or list == [1, 0, 4] or list == [5, 4, 0] :#for handup [5, 4, 0] and for handdown list == [1, 0, 4] or list == [5, 4, 0]
+    if track_list == [1, 0, 5] or track_list == [1, 0, 4] or track_list == [5, 4,
+                                                                            0]:
+        # for handup [5, 4, 0] and for handdown list == [1, 0, 4] or list == [5, 4, 0]
         # cv2.putText(image, str("call the police"), (45, 375), cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 0, 0), 25)
         # Window name in which image is displayed
         window_name = 'Image'
@@ -132,15 +125,15 @@ while True:
         image = cv2.putText(image, 'contacting authorities', org, font,
                             fontScale, color, thickness, cv2.LINE_AA)
 
-
     cv2.imshow("Volume", image)
-    print(list)
+    print(track_list)
 
-    if list == [1, 0, 5] or list == [1, 0, 4] or list == [5, 4, 0]:
+    if track_list == [1, 0, 5] or track_list == [1, 0, 4] or track_list == [5, 4, 0]:
         cv2.waitKey(3000)
         return_value, image = webcamFeed.read()
         # image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
         cv2.imwrite('C:\\Users\\Hp\\PycharmProjects\\pythonProject\\screenshot.png', image)
         send_test_mail('Photo of person in distress located by camera number 1 (Beit Hadfus 7)')
-        list = []
+        track_list = []
     cv2.waitKey(1)
+
